@@ -78,6 +78,19 @@ export default function ConfirmationPage() {
 
         setParking(parkingData);
 
+        // Envoyer l'email de confirmation (APRÈS le paiement réussi)
+        try {
+          await fetch("/api/send-confirmation-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reservation_id: resData.id }),
+          });
+          console.log("✅ Email de confirmation envoyé");
+        } catch (emailError) {
+          console.error("❌ Erreur envoi email:", emailError);
+          // On ne bloque pas l'affichage si l'email échoue
+        }
+
         // Nettoyer le localStorage
         clearReservationState();
 
