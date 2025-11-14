@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background-main: #FAF4EC;
+    --background-card: #F1E6D8;
+    --blue-primary: #1E355E;
+    --blue-secondary: #2E4A7C;
+    --text-primary: #1E355E;
+    --text-secondary: #324C7A;
+  }
+
+  body {
+    @apply bg-background-main text-text-primary font-manrope;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-fraunces font-bold text-text-primary;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+    line-height: 1.1;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+    line-height: 1.15;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+    line-height: 1.2;
+  }
+
+  p {
+    @apply text-text-secondary;
+    line-height: 1.6;
+  }
+}
+
+
+
+
+
