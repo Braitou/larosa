@@ -381,6 +381,17 @@ Créer un **proof of concept fonctionnel** à présenter à LaRosa démontrant :
 
 ---
 
-**Dernière mise à jour** : 13 novembre 2025  
+## 📦 Repository GitHub
+
+**URL** : [https://github.com/Braitou/larosa.git](https://github.com/Braitou/larosa.git)
+
+**Premier commit** : 14 novembre 2025
+- 71 fichiers
+- 17 126 lignes de code
+- MVP fonctionnel avec Dashboard Kanban
+
+---
+
+**Dernière mise à jour** : 14 novembre 2025  
 **Version** : 1.0 - MVP
 
