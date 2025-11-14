@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
+import { sendConfirmationEmail } from "@/lib/emails/send-confirmation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -122,6 +123,8 @@ export async function POST(req: NextRequest) {
     // Créer tous les véhicules
     console.log(`🚗 Création de ${vehicules.length} véhicules pour la réservation ${reservation.id}`);
     
+    const vehiclesCreated: Array<{ type: "lourd" | "leger"; code_confirmation: string }> = [];
+    
     for (let i = 0; i < vehicules.length; i++) {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       
@@ -142,10 +145,34 @@ export async function POST(req: NextRequest) {
         console.error("❌ Erreur création véhicule:", vehicleError);
       } else {
         console.log(`   ✅ Véhicule créé:`, vehicleData.id);
+        vehiclesCreated.push({
+          type: vehicleData.type,
+          code_confirmation: vehicleData.code_confirmation,
+        });
       }
     }
 
     console.log(`✅ Tous les véhicules ont été créés pour la réservation ${reservation.id}`);
+
+    // Envoyer l'email de confirmation avec les codes
+    try {
+      await sendConfirmationEmail({
+        to: contact_email,
+        contact_nom,
+        contact_prenom,
+        parking_nom: parking.nom,
+        parking_adresse: parking.adresse,
+        date_debut,
+        date_fin,
+        nombre_nuits: nombreNuits,
+        vehicles: vehiclesCreated,
+        montant_total_ht: montantTotal,
+      });
+      console.log("📧 Email de confirmation envoyé avec succès");
+    } catch (emailError) {
+      console.error("❌ Erreur lors de l'envoi de l'email:", emailError);
+      // On continue même si l'email échoue (MVP)
+    }
 
     // Créer la transaction
     await supabase.from("transactions").insert({

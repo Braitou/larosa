@@ -245,16 +245,17 @@ Commission de 5% sur chaque transaction via Stripe Connect (split automatique 95
 - [x] Dashboard admin = dashboard gardien (pour le MVP)
 - [x] Fonctions SQL pour gérer les places disponibles
 
-### ✅ Phase 8 : Emails de Confirmation
-- [ ] Configurer Resend avec domaine
-- [ ] Template email de confirmation
-  - [ ] Récapitulatif de la commande
-  - [ ] Tableau des codes de validation (1 par véhicule)
-  - [ ] Informations du parking (adresse, contact)
-  - [ ] Instructions pour les chauffeurs
-  - [ ] Dates et horaires
-- [ ] Envoi automatique après paiement réussi
-- [ ] Email de rappel 24h avant arrivée (optionnel)
+### ✅ Phase 8 : Emails de Confirmation [TERMINÉE]
+- [x] Configurer Resend avec domaine
+- [x] Template email de confirmation
+  - [x] Récapitulatif de la commande
+  - [x] Tableau des codes de validation (1 par véhicule)
+  - [x] Informations du parking (adresse, contact)
+  - [x] Instructions pour les chauffeurs
+  - [x] Dates et horaires
+- [x] Envoi automatique après création de la réservation
+- [x] Design HTML stylisé avec la DA du projet (couleurs, fonts, cards)
+- [ ] Email de rappel 24h avant arrivée (post-MVP)
 
 ### ✅ Phase 9 : Finitions & Optimisations
 - [ ] Gestion de la disponibilité en temps réel (Supabase Realtime)
