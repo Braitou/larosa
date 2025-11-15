@@ -180,6 +180,7 @@ export interface Database {
           code_confirmation: string;
           plaque_immatriculation: string | null;
           statut: "en_attente" | "arrive" | "parti";
+          presence_status: "in" | "out";
           checked_in_at: string | null;
           checked_out_at: string | null;
           created_at: string;
@@ -191,6 +192,7 @@ export interface Database {
           code_confirmation: string;
           plaque_immatriculation?: string | null;
           statut?: "en_attente" | "arrive" | "parti";
+          presence_status?: "in" | "out";
           checked_in_at?: string | null;
           checked_out_at?: string | null;
           created_at?: string;
@@ -202,6 +204,7 @@ export interface Database {
           code_confirmation?: string;
           plaque_immatriculation?: string | null;
           statut?: "en_attente" | "arrive" | "parti";
+          presence_status?: "in" | "out";
           checked_in_at?: string | null;
           checked_out_at?: string | null;
           created_at?: string;

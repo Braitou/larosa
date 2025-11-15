@@ -5,9 +5,7 @@ import {
   Clock,
   Shield,
   Smartphone,
-  MapPin,
   CheckCircle2,
-  Zap,
 } from "lucide-react";
 import { Header } from "@/components/shared/header";
 import { Footer } from "@/components/shared/footer";
@@ -29,23 +27,24 @@ export default function Home() {
 
             <h1 className="text-5xl lg:text-7xl">
               Parkings sécurisés pour vos{" "}
-              <span className="text-blue-primary">productions</span>
+              <span className="text-blue-primary bg-gradient-to-r from-blue-primary to-blue-secondary bg-clip-text text-transparent">
+                productions
+              </span>
             </h1>
 
             <p className="text-xl lg:text-2xl text-text-secondary max-w-2xl mx-auto">
-              Réservez en ligne votre place de parking pour camion de production
-              à Paris. Simple, rapide et sécurisé.
+              Réserver en ligne votre place de Parking à Paris. <br /> Simple, rapide et sécurisé.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button size="lg" className="text-lg px-8" asChild>
+              <Button size="lg" className="text-lg px-8 transform transition-all hover:scale-105 hover:shadow-xl" asChild>
                 <Link href="/reserver">Réserver une place</Link>
               </Button>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
-              <div>
+              <div className="hover:scale-110 transition-transform">
                 <p className="font-fraunces text-4xl font-bold text-blue-primary">
                   24/7
                 </p>
@@ -53,7 +52,7 @@ export default function Home() {
                   Accès sécurisé
                 </p>
               </div>
-              <div>
+              <div className="hover:scale-110 transition-transform">
                 <p className="font-fraunces text-4xl font-bold text-blue-primary">
                   2min
                 </p>
@@ -61,11 +60,11 @@ export default function Home() {
                   Pour réserver
                 </p>
               </div>
-              <div>
+              <div className="hover:scale-110 transition-transform">
                 <p className="font-fraunces text-4xl font-bold text-blue-primary">
                   100%
                 </p>
-                <p className="text-sm text-text-secondary mt-1">Sécurisé</p>
+                <p className="text-sm text-text-secondary mt-1">Paiement sécurisé</p>
               </div>
             </div>
           </div>
@@ -79,14 +78,14 @@ export default function Home() {
                 Pourquoi choisir LaRosa ?
               </h2>
               <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                La solution moderne pour les professionnels de l'audiovisuel
+                La solution pour garantir la sécurité de vos véhicules.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+              <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-blue-primary/50">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <Clock className="w-6 h-6 text-background-main" />
                   </div>
                   <h3 className="text-xl font-bold">Réservation instantanée</h3>
@@ -97,22 +96,21 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-blue-primary/50">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <Shield className="w-6 h-6 text-background-main" />
                   </div>
                   <h3 className="text-xl font-bold">100% sécurisé</h3>
                   <p className="text-text-secondary">
-                    Parkings surveillés 24/7 avec système de vidéosurveillance.
-                    Votre matériel est en sécurité.
+                    Parkings surveillés 24/7 avec gardien et système de vidéosurveillance.
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-blue-primary/50">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <Smartphone className="w-6 h-6 text-background-main" />
                   </div>
                   <h3 className="text-xl font-bold">Code de confirmation</h3>
@@ -123,41 +121,15 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-blue-primary/50">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-background-main" />
-                  </div>
-                  <h3 className="text-xl font-bold">Disponibilité temps réel</h3>
-                  <p className="text-text-secondary">
-                    Consultez le nombre de places disponibles en temps réel.
-                    Plus de déplacement pour rien.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <CheckCircle2 className="w-6 h-6 text-background-main" />
                   </div>
                   <h3 className="text-xl font-bold">Paiement sécurisé</h3>
                   <p className="text-text-secondary">
                     Payez en ligne par carte bancaire. Transaction sécurisée par
                     Stripe, leader mondial du paiement.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-primary flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-background-main" />
-                  </div>
-                  <h3 className="text-xl font-bold">Gain de temps</h3>
-                  <p className="text-text-secondary">
-                    Fini les appels, les emails, l'attente. Réservez en 2
-                    minutes et concentrez-vous sur votre tournage.
                   </p>
                 </CardContent>
               </Card>
@@ -177,7 +149,7 @@ export default function Home() {
 
             <div className="max-w-4xl mx-auto space-y-8">
               <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl shadow-lg">
                   1
                 </div>
                 <div className="flex-1 pt-1">
@@ -192,7 +164,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl shadow-lg">
                   2
                 </div>
                 <div className="flex-1 pt-1">
@@ -208,7 +180,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-primary text-background-main flex items-center justify-center font-fraunces font-bold text-xl shadow-lg">
                   3
                 </div>
                 <div className="flex-1 pt-1">
@@ -224,8 +196,8 @@ export default function Home() {
             </div>
 
             <div className="text-center mt-12">
-              <Button size="lg" asChild>
-                <Link href="/parkings">Réserver maintenant</Link>
+              <Button size="lg" className="transform transition-all hover:scale-105 hover:shadow-xl" asChild>
+                <Link href="/reserver">Réserver maintenant</Link>
               </Button>
             </div>
           </div>
@@ -244,10 +216,10 @@ export default function Home() {
             <Button
               size="lg"
               variant="secondary"
-              className="text-lg px-8"
+              className="text-lg px-8 transform transition-all hover:scale-105 hover:shadow-2xl"
               asChild
             >
-              <Link href="/register">Créer un compte gratuit</Link>
+              <Link href="/reserver">Réserver maintenant</Link>
             </Button>
           </div>
         </section>

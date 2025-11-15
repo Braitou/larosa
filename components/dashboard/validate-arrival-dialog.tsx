@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Truck, Car, CheckCircle2 } from "lucide-react";
 import type { Vehicle } from "@/types/database.types";
+import { formatPlaqueInput } from "@/lib/utils";
 
 interface ValidateArrivalDialogProps {
   open: boolean;
@@ -40,7 +41,9 @@ export function ValidateArrivalDialog({
 
     setIsValidating(true);
     try {
-      await onValidate(code, plaque);
+      // Enlever les tirets avant d'envoyer à la base de données
+      const plaqueCleaned = plaque.replace(/[-\s]/g, "");
+      await onValidate(code, plaqueCleaned);
       setCode("");
       setPlaque("");
       onOpenChange(false);
@@ -87,9 +90,10 @@ export function ValidateArrivalDialog({
             <Input
               id="plaque"
               value={plaque}
-              onChange={(e) => setPlaque(e.target.value.toUpperCase())}
+              onChange={(e) => setPlaque(formatPlaqueInput(e.target.value))}
               placeholder="AB-123-CD"
-              className="text-lg text-center uppercase"
+              className="text-lg text-center uppercase font-mono"
+              maxLength={9}
               required
             />
           </div>

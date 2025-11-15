@@ -28,17 +28,7 @@ cd larosa
 npm install
 ```
 
-3. **Configurer Supabase**
-
-Suis le guide complet dans [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
-
-Résumé :
-- Crée un projet sur [supabase.com](https://supabase.com)
-- Copie tes clés API
-- Exécute le schéma SQL fourni
-- Configure les variables d'environnement
-
-4. **Variables d'environnement**
+3. **Variables d'environnement**
 
 Crée un fichier `.env.local` :
 
@@ -60,7 +50,7 @@ RESEND_API_KEY=re_...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-5. **Lancer le serveur de développement**
+4. **Lancer le serveur de développement**
 
 ```bash
 npm run dev
@@ -91,8 +81,7 @@ larosa/
 │   └── utils.ts           # Utilitaires
 ├── types/
 │   └── database.types.ts  # Types TypeScript Supabase
-├── PROJECT.md             # Roadmap & documentation du projet
-└── SUPABASE_SETUP.md      # Guide de configuration Supabase
+└── PROJECT.md             # Roadmap & documentation du projet
 ```
 
 ## 🎨 Design System
@@ -146,42 +135,50 @@ npm run lint         # Linter le code
 
 Voir [PROJECT.md](./PROJECT.md) pour la roadmap complète du MVP.
 
-### Phase actuelle : Phase 1 ✅
-- [x] Setup Next.js 15 + TypeScript
-- [x] Configuration Tailwind CSS
-- [x] Installation Shadcn/ui
-- [x] Configuration Supabase
-- [x] Variables d'environnement
+### ✅ Statut Actuel : MVP Opérationnel (Phase 9/10)
 
-### Prochaine phase : Phase 2
-- [ ] Design system
-- [ ] Composants de base
-- [ ] Page d'accueil
+**Fonctionnalités complétées :**
+- ✅ Réservation en ligne avec formulaire multi-étapes
+- ✅ Paiement sécurisé via Stripe
+- ✅ Génération automatique de codes de confirmation
+- ✅ Emails de confirmation automatiques
+- ✅ Dashboard gardien avec gestion avancée (IN/OUT)
+- ✅ Protection anti-overbooking avec transactions atomiques
+- ✅ Formatage automatique des plaques d'immatriculation
+- ✅ Interface moderne et responsive
+
+**Prochaine étape : Phase 10 - Tests & Démo**
 
 ## 👥 Utilisateurs
 
 ### Clients (Régisseurs)
-- Consultation des parkings disponibles
-- Réservation en ligne avec paiement
-- Gestion de leurs réservations
+- ✅ Consultation des parkings disponibles en temps réel
+- ✅ Réservation en ligne sans création de compte
+- ✅ Paiement sécurisé par carte bancaire
+- ✅ Réception des codes de confirmation par email
 
 ### Gardiens
-- Validation des arrivées via code
-- Gestion des départs
-- Vue temps réel du parking
+- ✅ Validation des arrivées via code 6 chiffres
+- ✅ Gestion des départs définitifs
+- ✅ Suivi des sorties/retours temporaires (IN/OUT)
+- ✅ Dashboard en temps réel avec 4 colonnes
+- ✅ Interface mobile-friendly
 
 ### Administrateurs (LaRosa)
-- Gestion des parkings
-- Configuration des tarifs
-- Statistiques et reporting
+- ✅ Accès au dashboard gardien
+- 🔜 Gestion des parkings (Phase future)
+- 🔜 Configuration des tarifs (Phase future)
+- 🔜 Statistiques et reporting (Phase future)
 
-## 🔒 Sécurité
+## 🔒 Sécurité & Performance
 
-- ✅ Row Level Security (RLS) sur Supabase
-- ✅ Authentification sécurisée
-- ✅ Paiements via Stripe (PCI compliant)
-- ✅ Variables d'environnement protégées
-- ✅ Middleware de protection des routes
+- ✅ **Anti-overbooking** : Transactions SQL atomiques avec verrouillage
+- ✅ **Paiements sécurisés** : Stripe (PCI compliant)
+- ✅ **Authentification** : Supabase Auth pour gardiens/admins
+- ✅ **Protection des routes** : Middleware Next.js
+- ✅ **Variables d'environnement** : Protégées côté serveur
+- ✅ **Validation des données** : Zod + React Hook Form
+- ✅ **SEO optimisé** : Meta tags et fonts optimisées
 
 ## 📝 License
 

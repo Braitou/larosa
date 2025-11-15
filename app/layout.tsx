@@ -1,25 +1,32 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import { Toaster } from "sonner";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["700"],
   variable: "--font-fraunces",
   display: "swap",
 });
 
 const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-manrope",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "LaRosa - Réservation de Parkings Sécurisés",
-  description: "Plateforme de réservation de parkings sécurisés pour camions de production audiovisuelle à Paris",
+  title: "LaRosa | Parkings Sécurisés pour Productions Audiovisuelles",
+  description:
+    "Réservez en ligne votre place de parking sécurisé à Paris pour vos camions de production. Simple, rapide et sécurisé.",
+  keywords: [
+    "parking",
+    "paris",
+    "production audiovisuelle",
+    "camion",
+    "réservation",
+    "sécurisé",
+  ],
 };
 
 export default function RootLayout({
@@ -28,16 +35,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body className={`${fraunces.variable} ${manrope.variable} antialiased`}>
+    <html lang="fr" className={`${fraunces.variable} ${manrope.variable}`}>
+      <body className="font-manrope antialiased">
         {children}
-        <Toaster position="top-right" richColors />
+        <Toaster 
+          position="top-right" 
+          richColors 
+          toastOptions={{
+            duration: 4000,
+            style: {
+              fontFamily: "var(--font-manrope)",
+            },
+          }}
+        />
       </body>
     </html>
   );
 }
-
-
-
-
-

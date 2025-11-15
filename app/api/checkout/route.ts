@@ -153,6 +153,37 @@ export async function POST(req: NextRequest) {
 
     console.log(`✅ Tous les véhicules ont été créés pour la réservation ${reservation.id}`);
 
+    // Réserver les places de manière atomique (anti-overbooking)
+    const totalVehicules = nombre_vehicules_lourds + nombre_vehicules_legers;
+    console.log(`📊 Réservation atomique de ${totalVehicules} places pour le parking ${parking_id}`);
+    
+    const { data: reservationResult, error: reservationPlacesError } = await supabase.rpc(
+      "reserve_parking_places",
+      {
+        parking_id_param: parking_id,
+        nombre_places_param: totalVehicules,
+      }
+    );
+
+    if (reservationPlacesError || !reservationResult?.success) {
+      console.error("❌ Erreur réservation places:", reservationResult);
+      
+      // Supprimer la réservation et les véhicules créés
+      await supabase.from("vehicles").delete().eq("reservation_id", reservation.id);
+      await supabase.from("reservations").delete().eq("id", reservation.id);
+      
+      return NextResponse.json(
+        {
+          error: "Places insuffisantes",
+          details: reservationResult?.message || "Impossible de réserver les places",
+          places_disponibles: reservationResult?.places_disponibles || 0,
+        },
+        { status: 400 }
+      );
+    }
+    
+    console.log(`✅ Places réservées avec succès - Restantes: ${reservationResult.places_restantes}`);
+
     // Note : L'email sera envoyé APRÈS le paiement Stripe réussi (depuis la page de confirmation)
 
     // Créer la transaction

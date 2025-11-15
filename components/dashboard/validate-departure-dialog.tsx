@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Truck, Car, CheckCircle2 } from "lucide-react";
+import { formatPlaque } from "@/lib/utils";
 
 interface ValidateDepartureDialogProps {
   open: boolean;
@@ -67,7 +68,7 @@ export function ValidateDepartureDialog({
           <DialogDescription>
             Client : <strong>{clientName}</strong>
             <br />
-            Plaque : <strong>{plaque}</strong>
+            Plaque : <strong className="font-mono">{formatPlaque(plaque)}</strong>
           </DialogDescription>
         </DialogHeader>
 

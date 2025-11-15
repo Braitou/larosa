@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,14 +12,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ParkingSquare, LogOut, Truck, Car, Clock, Calendar as CalendarIcon } from "lucide-react";
+import { ParkingSquare, LogOut, Truck, Car, Clock, Calendar as CalendarIcon, LogIn, LogOut as LogOutIcon } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ValidateArrivalDialog } from "@/components/dashboard/validate-arrival-dialog";
 import { ValidateDepartureDialog } from "@/components/dashboard/validate-departure-dialog";
+import { TemporaryExitDialog } from "@/components/dashboard/temporary-exit-dialog";
+import { TemporaryReturnDialog } from "@/components/dashboard/temporary-return-dialog";
 import { toast } from "sonner";
 import type { Parking, Reservation, Vehicle } from "@/types/database.types";
+import { formatPlaque, formatPhone } from "@/lib/utils";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 interface ReservationWithVehicles extends Reservation {
   vehicles: Vehicle[];
@@ -30,6 +34,7 @@ export default function GardienDashboard() {
   const [selectedParkingId, setSelectedParkingId] = useState<string>("");
   const [reservations, setReservations] = useState<ReservationWithVehicles[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Dialog states
   const [arrivalDialog, setArrivalDialog] = useState<{
@@ -45,7 +50,66 @@ export default function GardienDashboard() {
     clientName: string;
   } | null>(null);
 
+  const [exitDialog, setExitDialog] = useState<{
+    open: boolean;
+    vehicle: Vehicle;
+    clientName: string;
+  } | null>(null);
+
+  const [returnDialog, setReturnDialog] = useState<{
+    open: boolean;
+    vehicle: Vehicle;
+    clientName: string;
+  } | null>(null);
+
   const today = format(new Date(), "yyyy-MM-dd");
+
+  // Fonction pour recharger les données
+  const refreshData = async () => {
+    if (!selectedParkingId) return;
+    
+    setRefreshing(true);
+    const supabase = createClient();
+
+    // Recharger les parkings pour avoir les places à jour
+    const { data: parkingsData } = await supabase
+      .from("parkings")
+      .select("*")
+      .order("nom");
+    
+    if (parkingsData) {
+      setParkings(parkingsData);
+    }
+
+    // Recharger les réservations
+    const { data: resData } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("parking_id", selectedParkingId)
+      .eq("statut", "confirmee")
+      .order("date_debut", { ascending: true });
+
+    if (resData) {
+      const reservationsWithVehicles = await Promise.all(
+        resData.map(async (res) => {
+          const { data: vehicles } = await supabase
+            .from("vehicles")
+            .select("*")
+            .eq("reservation_id", res.id)
+            .order("created_at");
+
+          return {
+            ...res,
+            vehicles: vehicles || [],
+          };
+        })
+      );
+
+      setReservations(reservationsWithVehicles);
+    }
+
+    setRefreshing(false);
+  };
 
   // Charger les parkings
   useEffect(() => {
@@ -111,8 +175,12 @@ export default function GardienDashboard() {
     r.vehicles.some((v) => v.statut === "en_attente")
   );
 
-  const reservationsGarees = reservations.filter((r) =>
-    r.vehicles.some((v) => v.statut === "arrive" && r.date_fin !== today)
+  const reservationsGaresIn = reservations.filter((r) =>
+    r.vehicles.some((v) => v.statut === "arrive" && v.presence_status === "in" && r.date_fin !== today)
+  );
+
+  const reservationsGaresOut = reservations.filter((r) =>
+    r.vehicles.some((v) => v.statut === "arrive" && v.presence_status === "out" && r.date_fin !== today)
   );
 
   const reservationsDeparts = reservations.filter((r) =>
@@ -123,7 +191,7 @@ export default function GardienDashboard() {
   const selectedParking = parkings.find((p) => p.id === selectedParkingId);
   const vehiculesPresents = reservations
     .flatMap((r) => r.vehicles)
-    .filter((v) => v.statut === "arrive").length;
+    .filter((v) => v.statut === "arrive" && v.presence_status === "in").length;
 
   // Validation d'arrivée
   const handleValidateArrival = async (code: string, plaque: string) => {
@@ -145,11 +213,12 @@ export default function GardienDashboard() {
       throw new Error("Code invalide");
     }
 
-    // Marquer comme arrivé avec la plaque
+    // Marquer comme arrivé avec la plaque et presence_status = 'in'
     const { error: updateError } = await supabase
       .from("vehicles")
       .update({
         statut: "arrive",
+        presence_status: "in",
         checked_in_at: new Date().toISOString(),
         plaque_immatriculation: plaque,
       })
@@ -160,18 +229,16 @@ export default function GardienDashboard() {
       throw updateError;
     }
 
-    // Décrémenter les places disponibles
-    await supabase.rpc("decrement_places_disponibles", {
-      parking_id_param: selectedParkingId,
-    });
+    // Note: Les places ont déjà été décrémentées lors de la réservation
+    // Pas besoin de les décrémenter à nouveau lors de l'arrivée physique
 
     toast.success(`✅ Véhicule ${vehicle.type} validé !`);
 
-    // Rafraîchir
-    setTimeout(() => window.location.reload(), 1000);
+    // Rafraîchir les données
+    await refreshData();
   };
 
-  // Validation de départ
+  // Validation de départ définitif
   const handleValidateDeparture = async (code: string) => {
     if (!departureDialog) return;
 
@@ -199,26 +266,87 @@ export default function GardienDashboard() {
       throw error;
     }
 
-    // Incrémenter les places disponibles
+    // Incrémenter les places disponibles (libération de la place)
+    // Peu importe si le véhicule était IN ou OUT, la place se libère au départ définitif
     await supabase.rpc("increment_places_disponibles", {
       parking_id_param: selectedParkingId,
     });
 
-    toast.success(`✅ Départ validé !`);
+    toast.success(`✅ Départ définitif validé !`);
 
-    setTimeout(() => window.location.reload(), 1000);
+    await refreshData();
+  };
+
+  // Sortie temporaire (IN → OUT)
+  const handleTemporaryExit = async (code: string) => {
+    if (!exitDialog) return;
+
+    const vehicle = exitDialog.vehicle;
+    const supabase = createClient();
+
+    // Marquer comme OUT
+    const { error } = await supabase
+      .from("vehicles")
+      .update({
+        presence_status: "out",
+      })
+      .eq("id", vehicle.id);
+
+    if (error) {
+      toast.error("Erreur lors de la validation");
+      throw error;
+    }
+
+    toast.success(`✅ Sortie temporaire validée !`);
+    await refreshData();
+  };
+
+  // Retour au parking (OUT → IN)
+  const handleTemporaryReturn = async (code: string) => {
+    if (!returnDialog) return;
+
+    const vehicle = returnDialog.vehicle;
+    const supabase = createClient();
+
+    // Marquer comme IN
+    const { error } = await supabase
+      .from("vehicles")
+      .update({
+        presence_status: "in",
+      })
+      .eq("id", vehicle.id);
+
+    if (error) {
+      toast.error("Erreur lors de la validation");
+      throw error;
+    }
+
+    toast.success(`✅ Retour au parking validé !`);
+    await refreshData();
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background-main flex items-center justify-center">
-        <p className="text-text-secondary">Chargement...</p>
+        <LoadingSkeleton variant="dashboard" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background-main">
+    <div className="min-h-screen bg-background-main relative">
+      {/* Overlay de chargement */}
+      {refreshing && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-8 shadow-2xl flex flex-col items-center gap-4">
+            <ParkingSquare className="w-16 h-16 text-blue-primary animate-spin" />
+            <p className="text-lg font-semibold text-blue-primary">
+              Actualisation en cours...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b border-border bg-background-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -258,7 +386,12 @@ export default function GardienDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 relative overflow-hidden">
+        {/* Contenu avec animation slider */}
+        <div 
+          key={selectedParkingId}
+          className="animate-in slide-in-from-right-4 fade-in duration-300"
+        >
         {/* Stats rapides */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
@@ -271,7 +404,7 @@ export default function GardienDashboard() {
           </Card>
           <Card>
             <CardContent className="pt-4">
-              <p className="text-sm text-text-secondary">Véhicules garés</p>
+              <p className="text-sm text-text-secondary">Véhicules présents</p>
               <p className="text-2xl font-bold text-green-600">
                 {vehiculesPresents}
               </p>
@@ -295,8 +428,8 @@ export default function GardienDashboard() {
           </Card>
         </div>
 
-        {/* Kanban 3 colonnes */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Kanban 4 colonnes */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Colonne 1 : À venir (bleu) */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
@@ -333,10 +466,13 @@ export default function GardienDashboard() {
                             <div className="flex items-start justify-between w-full pr-4">
                               <div className="text-left">
                                 <p className="font-semibold text-blue-900">
-                                  {reservation.contact_prenom} {reservation.contact_nom}
+                                  {reservation.contact_societe}
                                 </p>
                                 <p className="text-xs text-blue-700">
-                                  {reservation.contact_societe}
+                                  {reservation.contact_prenom} {reservation.contact_nom}{" "}
+                                  <span className="font-manrope text-blue-600">
+                                    ({formatPhone(reservation.contact_telephone)})
+                                  </span>
                                 </p>
                               </div>
                               <Badge className="bg-blue-500">
@@ -387,30 +523,30 @@ export default function GardienDashboard() {
             </div>
           </div>
 
-          {/* Colonne 2 : Garés (vert) */}
+          {/* Colonne 2 : Garés IN (vert foncé) */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="w-3 h-3 rounded-full bg-green-600" />
               <h2 className="font-semibold text-lg">
-                Garés ({reservationsGarees.reduce((acc, r) => acc + r.vehicles.filter(v => v.statut === "arrive" && r.date_fin !== today).length, 0)})
+                Garés IN ({reservationsGaresIn.reduce((acc, r) => acc + r.vehicles.filter(v => v.statut === "arrive" && v.presence_status === "in" && r.date_fin !== today).length, 0)})
               </h2>
             </div>
 
             <div className="space-y-3">
-              {reservationsGarees.length === 0 ? (
+              {reservationsGaresIn.length === 0 ? (
                 <Card className="bg-green-50/50">
                   <CardContent className="py-8 text-center">
                     <ParkingSquare className="w-8 h-8 mx-auto mb-2 text-green-300" />
-                    <p className="text-sm text-text-secondary">Aucun véhicule garé</p>
+                    <p className="text-sm text-text-secondary">Aucun véhicule sur le parking</p>
                   </CardContent>
                 </Card>
               ) : (
                 <Accordion type="multiple" className="space-y-3">
-                  {reservationsGarees.map((reservation) => {
-                    const vehiculesGares = reservation.vehicles.filter(
-                      (v) => v.statut === "arrive" && reservation.date_fin !== today
+                  {reservationsGaresIn.map((reservation) => {
+                    const vehiculesGaresIn = reservation.vehicles.filter(
+                      (v) => v.statut === "arrive" && v.presence_status === "in" && reservation.date_fin !== today
                     );
-                    if (vehiculesGares.length === 0) return null;
+                    if (vehiculesGaresIn.length === 0) return null;
 
                     return (
                       <AccordionItem
@@ -418,45 +554,56 @@ export default function GardienDashboard() {
                         value={reservation.id}
                         className="border-0"
                       >
-                        <Card className="bg-green-50/50 border-green-200">
+                        <Card className="bg-green-50 border-green-600">
                           <AccordionTrigger className="px-4 py-3 hover:no-underline">
                             <div className="flex items-start justify-between w-full pr-4">
                               <div className="text-left">
                                 <p className="font-semibold text-green-900">
-                                  {reservation.contact_prenom} {reservation.contact_nom}
-                                </p>
-                                <p className="text-xs text-green-700">
                                   {reservation.contact_societe}
                                 </p>
+                                <p className="text-xs text-green-700">
+                                  {reservation.contact_prenom} {reservation.contact_nom}{" "}
+                                  <span className="font-manrope text-green-600">
+                                    ({formatPhone(reservation.contact_telephone)})
+                                  </span>
+                                </p>
                               </div>
-                              <Badge className="bg-green-500">
-                                {vehiculesGares.length} véh.
+                              <Badge className="bg-green-600">
+                                {vehiculesGaresIn.length} véh.
                               </Badge>
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="px-4 pb-3">
                             <div className="space-y-2 pt-2">
-                              {vehiculesGares.map((vehicle) => (
-                                <div
+                              {vehiculesGaresIn.map((vehicle) => (
+                                <button
                                   key={vehicle.id}
-                                  className="p-3 bg-white rounded-lg border border-green-200"
+                                  onClick={() =>
+                                    setExitDialog({
+                                      open: true,
+                                      vehicle,
+                                      clientName: `${reservation.contact_prenom} ${reservation.contact_nom}`,
+                                    })
+                                  }
+                                  className="w-full p-3 bg-white rounded-lg border border-green-600 hover:border-green-700 hover:shadow-md transition-all text-left"
                                 >
                                   <div className="flex items-center gap-3">
                                     {vehicle.type === "lourd" ? (
-                                      <Truck className="w-5 h-5 text-green-600" />
+                                      <Truck className="w-5 h-5 text-green-700" />
                                     ) : (
-                                      <Car className="w-5 h-5 text-green-600" />
+                                      <Car className="w-5 h-5 text-green-700" />
                                     )}
                                     <div className="flex-1">
-                                      <p className="text-sm font-medium">
-                                        {vehicle.plaque_immatriculation || "Plaque inconnue"}
+                                      <p className="text-sm font-medium font-mono">
+                                        {formatPlaque(vehicle.plaque_immatriculation)} ({vehicle.type === "lourd" ? "lourd" : "léger"})
                                       </p>
-                                      <p className="text-xs text-text-secondary">
-                                        Véhicule {vehicle.type}
+                                      <p className="text-xs text-text-secondary flex items-center gap-1">
+                                        <LogOutIcon className="w-3 h-3" />
+                                        Cliquez pour sortie temporaire
                                       </p>
                                     </div>
                                   </div>
-                                </div>
+                                </button>
                               ))}
                             </div>
                           </AccordionContent>
@@ -469,7 +616,100 @@ export default function GardienDashboard() {
             </div>
           </div>
 
-          {/* Colonne 3 : Départs aujourd'hui (rouge/orange) */}
+          {/* Colonne 3 : Garés OUT (vert clair) */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-3 h-3 rounded-full bg-green-400" />
+              <h2 className="font-semibold text-lg">
+                Garés OUT ({reservationsGaresOut.reduce((acc, r) => acc + r.vehicles.filter(v => v.statut === "arrive" && v.presence_status === "out" && r.date_fin !== today).length, 0)})
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {reservationsGaresOut.length === 0 ? (
+                <Card className="bg-green-50/30">
+                  <CardContent className="py-8 text-center">
+                    <LogOutIcon className="w-8 h-8 mx-auto mb-2 text-green-200" />
+                    <p className="text-sm text-text-secondary">Aucune sortie temporaire</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Accordion type="multiple" className="space-y-3">
+                  {reservationsGaresOut.map((reservation) => {
+                    const vehiculesGaresOut = reservation.vehicles.filter(
+                      (v) => v.statut === "arrive" && v.presence_status === "out" && reservation.date_fin !== today
+                    );
+                    if (vehiculesGaresOut.length === 0) return null;
+
+                    return (
+                      <AccordionItem
+                        key={reservation.id}
+                        value={reservation.id}
+                        className="border-0"
+                      >
+                        <Card className="bg-green-50/50 border-green-400">
+                          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                            <div className="flex items-start justify-between w-full pr-4">
+                              <div className="text-left">
+                                <p className="font-semibold text-green-800">
+                                  {reservation.contact_societe}
+                                </p>
+                                <p className="text-xs text-green-600">
+                                  {reservation.contact_prenom} {reservation.contact_nom}{" "}
+                                  <span className="font-manrope text-green-500">
+                                    ({formatPhone(reservation.contact_telephone)})
+                                  </span>
+                                </p>
+                              </div>
+                              <Badge className="bg-green-400">
+                                {vehiculesGaresOut.length} véh.
+                              </Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-3">
+                            <div className="space-y-2 pt-2">
+                              {vehiculesGaresOut.map((vehicle) => (
+                                <button
+                                  key={vehicle.id}
+                                  onClick={() =>
+                                    setReturnDialog({
+                                      open: true,
+                                      vehicle,
+                                      clientName: `${reservation.contact_prenom} ${reservation.contact_nom}`,
+                                    })
+                                  }
+                                  className="w-full p-3 bg-white rounded-lg border border-green-400 hover:border-green-500 hover:shadow-md transition-all text-left"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    {vehicle.type === "lourd" ? (
+                                      <Truck className="w-5 h-5 text-green-600" />
+                                    ) : (
+                                      <Car className="w-5 h-5 text-green-600" />
+                                    )}
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium font-mono">
+                                        {formatPlaque(vehicle.plaque_immatriculation)} ({vehicle.type === "lourd" ? "lourd" : "léger"})
+                                      </p>
+                                      <p className="text-xs text-text-secondary flex items-center gap-1">
+                                        <LogIn className="w-3 h-3" />
+                                        Cliquez pour retour au parking
+                                      </p>
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </Card>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              )}
+            </div>
+          </div>
+
+          {/* Colonne 4 : Départs aujourd'hui (orange) */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-orange-500" />
@@ -505,10 +745,13 @@ export default function GardienDashboard() {
                             <div className="flex items-start justify-between w-full pr-4">
                               <div className="text-left">
                                 <p className="font-semibold text-orange-900">
-                                  {reservation.contact_prenom} {reservation.contact_nom}
+                                  {reservation.contact_societe}
                                 </p>
                                 <p className="text-xs text-orange-700">
-                                  {reservation.contact_societe}
+                                  {reservation.contact_prenom} {reservation.contact_nom}{" "}
+                                  <span className="font-manrope text-orange-600">
+                                    ({formatPhone(reservation.contact_telephone)})
+                                  </span>
                                 </p>
                               </div>
                               <Badge className="bg-orange-500">
@@ -537,13 +780,16 @@ export default function GardienDashboard() {
                                       <Car className="w-5 h-5 text-orange-600" />
                                     )}
                                     <div className="flex-1">
-                                      <p className="text-sm font-medium">
-                                        {vehicle.plaque_immatriculation || "Plaque inconnue"}
+                                      <p className="text-sm font-medium font-mono">
+                                        {formatPlaque(vehicle.plaque_immatriculation)} ({vehicle.type === "lourd" ? "lourd" : "léger"})
                                       </p>
                                       <p className="text-xs text-text-secondary">
                                         Véhicule {vehicle.type} - Départ aujourd'hui
                                       </p>
                                     </div>
+                                    <Badge variant="outline" className="text-xs">
+                                      {vehicle.presence_status === "in" ? "Sur parking" : "Sorti"}
+                                    </Badge>
                                   </div>
                                 </button>
                               ))}
@@ -557,6 +803,7 @@ export default function GardienDashboard() {
               )}
             </div>
           </div>
+        </div>
         </div>
       </main>
 
@@ -580,6 +827,30 @@ export default function GardienDashboard() {
           plaque={departureDialog.vehicle.plaque_immatriculation || "Inconnue"}
           expectedCode={departureDialog.vehicle.code_confirmation}
           onValidate={handleValidateDeparture}
+        />
+      )}
+
+      {exitDialog && (
+        <TemporaryExitDialog
+          open={exitDialog.open}
+          onOpenChange={(open) => !open && setExitDialog(null)}
+          vehicleType={exitDialog.vehicle.type}
+          clientName={exitDialog.clientName}
+          plaque={exitDialog.vehicle.plaque_immatriculation || "Inconnue"}
+          expectedCode={exitDialog.vehicle.code_confirmation}
+          onValidate={handleTemporaryExit}
+        />
+      )}
+
+      {returnDialog && (
+        <TemporaryReturnDialog
+          open={returnDialog.open}
+          onOpenChange={(open) => !open && setReturnDialog(null)}
+          vehicleType={returnDialog.vehicle.type}
+          clientName={returnDialog.clientName}
+          plaque={returnDialog.vehicle.plaque_immatriculation || "Inconnue"}
+          expectedCode={returnDialog.vehicle.code_confirmation}
+          onValidate={handleTemporaryReturn}
         />
       )}
     </div>
